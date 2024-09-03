@@ -1,0 +1,6 @@
+function [Label] = getLabelWith3Regim(Time,timePoints)
+Label = [ones(numel(find(Time<timePoints(1))),1);...
+    zeros(numel(find(Time>=timePoints(1)&Time<timePoints(2))),1);...
+    2.*ones(numel(find(Time>=timePoints(2))),1)];
+
+end
