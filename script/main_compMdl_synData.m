@@ -1,6 +1,7 @@
 %%
 clear
 addpath '.\synData';
+addpath '.\model';
 addpath '.\trainedModel';
 addpath '..\common';
 synDataGenerator;
