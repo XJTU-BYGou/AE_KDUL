@@ -49,8 +49,7 @@ modelIndex = 3;
 cName{modelIndex} = 'Gaussian Discriminant Analysis';
 load('.\trainedModel\res_GDA.mat',...
     'model','trainHistory');
-predScore = appGaussianDiscriminative(model.GDA.Model,XTrain);
-predScore = 1 - predScore;
+predScore = appGaussianDiscriminative(model.GDA.BestModel.Model,XTrain);
 [~,predLabelCell{modelIndex}] = max(predScore,[],1);
 predScoreCell{modelIndex} = predScore;
 predLoss{modelIndex} = arrayfun(@(x)getAggregateLoss(predScoreCell{modelIndex},[res_pri.Time]),1:reptNum);
@@ -75,15 +74,19 @@ paramNum(modelIndex) = size(XTrain,1)+1;
 modelIndex = 5;
 % 5 GBDT
 cName{modelIndex} = 'GBDT';
+% load('.\trainedModel\res_GBDT.mat',...
+%     'model','trainHistory');
+% predScore = appGBDT(model.GBDT.Model,XTrain);
+% paramNum(modelIndex) = sum(cellfun(@(x)sum(x.IsBranchNode),model.GBDT.Model),'all');
 load('.\trainedModel\res_GBDT.mat',...
-    'model','trainHistory');
-predScore = appGBDT(model.GBDT.Model,XTrain);
+    'predScore','trainHistory');
+paramNum(modelIndex) = 7116354;
 [~,predLabelCell{modelIndex}] = max(predScore,[],1);
 predScoreCell{modelIndex} = predScore;
 predLoss{modelIndex} = arrayfun(@(x)getAggregateLoss(predScoreCell{modelIndex},[res_pri.Time]),1:reptNum);
 predLoss_avg(modelIndex) = mean(predLoss{modelIndex});
 predLoss_std(modelIndex) = std(predLoss{modelIndex});
-paramNum(modelIndex) = sum(cellfun(@(x)sum(x.IsBranchNode),model.GBDT.Model),'all');
+
 
 % Peer machine learning method
 modelIndex = 6;
@@ -188,14 +191,14 @@ cName{9} = 'IDNN';
 
 resLabel{1}(1).StIndex = 12532;  resLabel{1}(1).EdIndex = 12728; resLabel{1}(1).PlantFlag = true;
 resLabel{1}(2).StIndex = 24;  resLabel{1}(2).EdIndex = 308; resLabel{1}(2).PlantFlag = true;
-resLabel{2}(1).StIndex = 11944;  resLabel{2}(1).EdIndex = 12026; resLabel{2}(1).PlantFlag = true;
-resLabel{2}(2).StIndex = 223;  resLabel{2}(2).EdIndex = 698; resLabel{2}(2).PlantFlag = true;
+resLabel{2}(1).StIndex = 11242;  resLabel{2}(1).EdIndex = 11323; resLabel{2}(1).PlantFlag = true;
+resLabel{2}(2).StIndex = 824;  resLabel{2}(2).EdIndex = 1384; resLabel{2}(2).PlantFlag = true;
 resLabel{3}(1).StIndex = 0;  resLabel{3}(1).EdIndex = 0; resLabel{3}(1).PlantFlag = false;
 resLabel{3}(2).StIndex = 0;  resLabel{3}(2).EdIndex = 0; resLabel{3}(2).PlantFlag = false;
-resLabel{4}(1).StIndex = 12656;  resLabel{4}(1).EdIndex = 12719; resLabel{4}(1).PlantFlag = true;
-resLabel{4}(2).StIndex = 105;  resLabel{4}(2).EdIndex = 190; resLabel{4}(2).PlantFlag = true;
-resLabel{5}(1).StIndex = 12056;  resLabel{5}(1).EdIndex = 12161; resLabel{5}(1).PlantFlag = true;
-resLabel{5}(2).StIndex = 62;  resLabel{5}(2).EdIndex = 612; resLabel{5}(2).PlantFlag = true;
+resLabel{4}(1).StIndex = 12046;  resLabel{4}(1).EdIndex = 12156; resLabel{4}(1).PlantFlag = true;
+resLabel{4}(2).StIndex = 356;  resLabel{4}(2).EdIndex = 553; resLabel{4}(2).PlantFlag = true;
+resLabel{5}(1).StIndex = 11731;  resLabel{5}(1).EdIndex = 11846; resLabel{5}(1).PlantFlag = true;
+resLabel{5}(2).StIndex = 86;  resLabel{5}(2).EdIndex = 909; resLabel{5}(2).PlantFlag = true;
 resLabel{6}(1).StIndex = 0;  resLabel{6}(1).EdIndex = 0; resLabel{6}(1).PlantFlag = false;
 resLabel{6}(2).StIndex = 0;  resLabel{6}(2).EdIndex = 0; resLabel{6}(2).PlantFlag = false;
 resLabel{7}(1).StIndex = 0;  resLabel{7}(1).EdIndex = 0; resLabel{7}(1).PlantFlag = false;
@@ -213,24 +216,43 @@ perfValue = cellfun(@(x)2*prod(x)/(sum(x)+1e-8),perf,'UniformOutput',true);
 
 predLoss = cellfun(@single,predLoss,'UniformOutput',false);
 
-outlierCutOff = [0.5,0.6,0.678,0,0.655,0,7.6,0,0.55];
+outlierCutOff = zeros(size(predLoss));
 predLoss_eff = cellfun(@(x,y)x(x>y),predLoss,num2cell(outlierCutOff),'UniformOutput',false);
 predLoss_avg = cellfun(@mean,predLoss_eff);
 predLoss_std = cellfun(@std,predLoss);
 
 razorK = 0.1;
 
-predOverallLoss_avg = getOverallPerformance(predLoss_avg,paramNum,razorK);
-predOverallLoss = cellfun(@(x,y) getOverallPerformance(x,y,razorK),...
-    predLoss,mat2cell(paramNum,size(paramNum,1),ones(size(paramNum))),'UniformOutput',false);
+[predOverallLoss,perfL,perfC] = cellfun(@(x,y) getOverallPerformance(x,y,razorK),...
+    predLoss_eff,mat2cell(paramNum,size(paramNum,1),ones(size(paramNum))),'UniformOutput',false);
+predOverallLoss_avg = cellfun(@(x)mean(single(x)),predOverallLoss);
 predOverallLoss_std = cellfun(@(x)std(single(x)),predOverallLoss);
+perfL_std = cellfun(@(x)std(single(x)),perfL);
+perfC_std = cellfun(@(x)std(single(x)),perfC);
+perfL_avg = cellfun(@(x)mean(single(x)),perfL);
+perfC_avg = cellfun(@(x)mean(single(x)),perfC);
+
+[sortedNum] = sort(unique(perfValue),'descend');
+Hcrite1 = arrayfun(@(x)find(ismember(sortedNum,x)),perfValue);
+Hcrite2 = perfValue./max(perfValue);
+
+[sortedNum] = sort(unique(perfL_avg(1:5)),'descend');
+Hcrite1_L = arrayfun(@(x)find(ismember(sortedNum,x)),perfL_avg(1:5));
+Hcrite2_L = perfL_avg(1:5)./max(perfL_avg(1:5));
+
+[sortedNum] = sort(unique(perfC_avg(1:5)),'descend');
+Hcrite1_C = arrayfun(@(x)find(ismember(sortedNum,x)),perfC_avg(1:5));
+Hcrite2_C = perfC_avg(1:5)./max(perfC_avg(1:5));
 
 %%
 exportPath = '.\export';
 mkdir(exportPath);
 save(fullfile(exportPath,'data_Fig3a.mat'),...
-    'perfValue','paramNum','cName',...
-    'predOverallLoss_avg','predOverallLoss_std','predLoss_avg','predLoss_std');
+    'perfValue','paramNum','cName','razorK',...
+    'predOverallLoss','predLoss','predLoss_eff',...
+    'predOverallLoss_avg','predOverallLoss_std','predLoss_avg','predLoss_std',...
+    'perfL','perfL_avg','perfL_std','perfC','perfC_avg','perfC_std',...
+    'Hcrite1','Hcrite2','Hcrite1_L','Hcrite2_L','Hcrite1_C','Hcrite2_C');
 
 %%
 tInt = 1200;
@@ -359,10 +381,6 @@ for i = 1:numel(record)
         len(i) = 0;
     end
 end
-end
-
-function overallPerf = getOverallPerformance(loss,Nc,razorK)
-overallPerf = (1./(loss)) .* (1 - razorK) + razorK.* (1./(Nc));
 end
 
 

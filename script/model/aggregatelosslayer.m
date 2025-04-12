@@ -22,17 +22,17 @@ classdef aggregatelosslayer < nnet.layer.ClassificationLayer
             for i = 1:length(varargin)/2
                 switch lower(varargin{i*2-1})
                     case 'w'
-                    w2 = varargin{i*2};
+                    layer.w = varargin{i*2};
                     case 'timeint'
-                    timeInt = varargin{i*2};
+                    layer.timeInt = varargin{i*2};
                 end
             end
         end
         
         function loss = forwardLoss(layer, Y, T)
 
-            intNum = max(poissrnd(12),5);
-            timeTransMat_l = getTimeTransMat(layer.timeMat,intNum,[],layer.timeInt);
+%             intNum = max(poissrnd(12),5);
+            timeTransMat_l = @(x)getTimeTransMat(layer.timeMat,x,[],layer.timeInt);
             l = getAggregateTrendLoss(timeTransMat_l,Y,'w',layer.w);    
                         
             loss = l;

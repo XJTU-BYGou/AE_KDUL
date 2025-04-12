@@ -28,6 +28,7 @@ learnRateDropPeriod = 1e4;
 learnRateDropFactor = 0.8;
 Verbose = true;
 VerboseFrequency = 50;
+UpdateRatio = 0.02;
 
 options.InitialLearnRate = initialLearnRate;
 options.GradientDecayFactor = gradientDecayFactor;
@@ -36,12 +37,17 @@ options.LearnRateDropFactor = learnRateDropFactor;
 options.Verbose = Verbose;
 options.VerboseFrequency = VerboseFrequency;
 options.MaxEpoch = MaxEpoch;
+options.UpdateRatio = UpdateRatio;
 
 for i = 1:length(varargin)/2
     switch lower(varargin{i*2-1})
         case 'options'
         options = varargin{i*2};
     end
+end
+
+if ~isfield(options,'UpdateRatio')
+    options.UpdateRatio = UpdateRatio;
 end
 
 % Init model
@@ -82,6 +88,13 @@ for i = 1:options.MaxEpoch
     loss = extractdata(loss);
     Y = extractdata(Y);
 
+    model.KSVM.Model = Model;
+    model.KSVM.Loss = loss;
+    if loss < model.KSVM.BestModel.Loss
+        model.KSVM.BestModel.Loss = loss;
+        model.KSVM.BestModel.Model = Model;
+    end
+    
     % Update parameters
     lr = initialLearnRate;
     
@@ -89,7 +102,7 @@ for i = 1:options.MaxEpoch
     
 
     sv = (YL_pre .* (Y.*Model.weights.A(1,1)+Model.weights.A(2,1))) <= 0;
-    batchFlag = rand(size(Model.weights.Alpha)) < 1;
+    batchFlag = rand(size(Model.weights.Alpha)) < options.UpdateRatio;
     grad.weights.Alpha = 0.*Model.weights.Alpha - batchFlag.* (sv);
     grad.weights.B = - (batchFlag.* sv) * YL_pre'./(sum(sv)+1e-6);
     
@@ -102,14 +115,6 @@ for i = 1:options.MaxEpoch
     YL = logsig(Y.*Model.weights.A(1,1)+Model.weights.A(2,1));
     Model.Y = sign(YL-0.5);
     
-    
-    
-    model.KSVM.Model = Model;
-    model.KSVM.Loss = loss;
-    if loss < model.KSVM.BestModel.Loss
-        model.KSVM.BestModel.Loss = loss;
-        model.KSVM.BestModel.Model = Model;
-    end
 
     %% Record the processing
     
@@ -119,59 +124,63 @@ for i = 1:options.MaxEpoch
     history(i,1) = curLoop;
     if options.Verbose
         if mod(i,options.VerboseFrequency) == 0 || i == 1
-            fprintf('Epoch: %i , Training Time: %f , Loss: %f \n',...
-                i,curLoop.ElapsedTime,curLoop.Loss);
+            fprintf('Epoch: %i , Training Time: %f , Loss: %f , Accuracy: %f \n',...
+                i,curLoop.ElapsedTime,curLoop.Loss,curLoop.Acc);
         end
-        % Plot
-%         if i == 1
-%             fig = figure('Position',[200,150,680,800]);
-%             axbg = axes(fig,'Units','pixels','Position',[100 460 500 300],...
-%             'Color', 'none','Box','off',...
-%             'XAxisLocation','top','YAxisLocation','right',...
-%             'LineWidth',2,'TickLength', [0.02,0.05],...
-%             'XTick',[],'YTick',[]);
-%             ax1 = axes(fig,'Units','pixels','Position',axbg.Position,...
-%             'Color', 'none','Box','off',...
-%             'LineWidth',2,'TickLength', [0.02,0.05],...
-%             'FontName','Arial','FontSize',16,'FontWeight','bold');    
-%             xlabel('Iteration');
-%             ylabel('Pseudo Accuracy (%)');
-%             ax1.YLim = [0,100];
-%             hold on;
-%             anAcc = animatedline(ax1,i,curLoop.Acc.*100,'Color','b','LineWidth',2);
-%         
-%             axbg = axes(fig,'Units','pixels','Position',[100 80 500 300],...
-%             'Color', 'none','Box','off',...
-%             'XAxisLocation','top','YAxisLocation','right',...
-%             'LineWidth',2,'TickLength', [0.02,0.05],...
-%             'XTick',[],'YTick',[]);
-%             ax2 = axes(fig,'Units','pixels','Position',axbg.Position,...
-%             'Color', 'none','Box','off',...
-%             'LineWidth',2,'TickLength', [0.02,0.05],...
-%             'FontName','Arial','FontSize',16,'FontWeight','bold');    
-%             hold on;
-%             xlabel('Iteration');
-%             ylabel('Loss');
-%             anLoss = animatedline(ax2,i,curLoop.Loss,'Color','r','LineWidth',2);
-%             drawnow();
-%         else
-%             addpoints(anAcc,i,curLoop.Acc.*100);
-%             addpoints(anLoss,i,curLoop.Loss);
-%             drawnow();
-%         end
+        if i == 1
+            fig = figure('Position',[200,150,680,800]);
+            axbg = axes(fig,'Units','pixels','Position',[100 460 500 300],...
+            'Color', 'none','Box','off',...
+            'XAxisLocation','top','YAxisLocation','right',...
+            'LineWidth',2,'TickLength', [0.02,0.05],...
+            'XTick',[],'YTick',[]);
+            ax1 = axes(fig,'Units','pixels','Position',axbg.Position,...
+            'Color', 'none','Box','off',...
+            'LineWidth',2,'TickLength', [0.02,0.05],...
+            'FontName','Arial','FontSize',16,'FontWeight','bold');    
+            xlabel('Iteration');
+            ylabel('Pseudo Accuracy (%)');
+            ax1.YLim = [0,100];
+            hold on;
+            anAcc = animatedline(ax1,i,curLoop.Acc.*100,'Color','b','LineWidth',2);
+        
+            axbg = axes(fig,'Units','pixels','Position',[100 80 500 300],...
+            'Color', 'none','Box','off',...
+            'XAxisLocation','top','YAxisLocation','right',...
+            'LineWidth',2,'TickLength', [0.02,0.05],...
+            'XTick',[],'YTick',[]);
+            ax2 = axes(fig,'Units','pixels','Position',axbg.Position,...
+            'Color', 'none','Box','off',...
+            'LineWidth',2,'TickLength', [0.02,0.05],...
+            'FontName','Arial','FontSize',16,'FontWeight','bold');    
+            hold on;
+            xlabel('Iteration');
+            ylabel('Loss');
+            anLoss = animatedline(ax2,i,curLoop.Loss,'Color','r','LineWidth',2);
+            drawnow();
+        else
+            addpoints(anAcc,i,curLoop.Acc.*100);
+            addpoints(anLoss,i,curLoop.Loss);
+            drawnow();
+        end
     end
 end
 end
 
 function [output,loss,gradloss] = lossOfModel_rand(model,X,lossfun)
         
+        
         output = reshape(X,1,[]);
         output = [1-output;output];
         L = lossfun(output);
         
         loss =  L;
-
+%         loss = L + sum(model.W.^2,'all')/2;
+        
+%         gradloss = [];
         gradloss.X = dlgradient(loss,X);
+%         gradloss.W = dlgradient(loss,model.W);
+%         gradloss.B = dlgradient(loss,model.B);
 
 end
 

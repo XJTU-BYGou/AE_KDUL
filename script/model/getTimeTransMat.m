@@ -13,7 +13,6 @@ function [timeTransMat] = getTimeTransMat(timeMat,intNum,seedNum,timeInt)
         minTime = timeInt(1);
         maxTime = timeInt(2);
     end
-    
    
     timePart = [0;sort(rand(intNum,1));1] * (maxTime - minTime) + minTime;
     ttM = timeMat >= timePart(1:end-1) & timeMat < timePart(2:end);

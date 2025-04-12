@@ -1,6 +1,7 @@
-function loss = getAggregateTrendLoss(timeTransMat,input,varargin)
+function loss = getAggregateTrendLoss(Timefun,input,varargin)
 delta = 1e-8;
-reptNum = 20;
+reptNum = 1;
+traveNum = 20;
 w2 = 0.5;
 for i = 1:length(varargin)/2
     switch lower(varargin{i*2-1})
@@ -13,23 +14,25 @@ for i = 1:length(varargin)/2
     end
 end
 w1 = 1 - w2;
+L = 0;
+sumLen = 0;
 
-% Symmetric form
-C_p1 = -timeTransMat.Mat /2 * (log(max(1 - input(2,:)',delta)) + log(max(input(1,:)',delta)));
-C_p2 = -timeTransMat.Mat /2 * (log(max(1 - input(1,:)',delta)) + log(max(input(2,:)',delta)));
-
+for n = 1:reptNum
+intNum = max(poissrnd(12),5);
+timeTransMat = Timefun(intNum);
 % Acceleration by matrix calculation
 % Default region 
 N = timeTransMat.N;
 Num = timeTransMat.Num;
 timelen = timeTransMat.Timelen;
 
-% Sampling
-interruptNum = randsample([2:2:N],reptNum,true) - 1;
+% Symmetric form
+C_p1 = -timeTransMat.Mat /2 * (log(max(1 - input(2,:)',delta)) + log(max(input(1,:)',delta)));
+C_p2 = -timeTransMat.Mat /2 * (log(max(1 - input(1,:)',delta)) + log(max(input(2,:)',delta)));
 
-L = 0;
-sumLen = 0;
-for i = 1:reptNum
+% Sampling
+interruptNum = randsample([2:2:N],traveNum,true) - 1;
+for i = 1:traveNum
     interruptMat = zeros(interruptNum(i)+1,N);
     interruptIndex = [0,sort(randsample([1:N-1],interruptNum(i))),N];
     % Merge region

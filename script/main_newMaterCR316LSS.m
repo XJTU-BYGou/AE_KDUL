@@ -28,11 +28,11 @@ predLabel = classify(net,XTest);
 predScore = predict(net,XTest);
 
 %%
-[MLEres_ori1,MLErecord_ori1] = powerlawExponentMLEstimator([res_pri(label==1).Eny],downSamplingFromPowerLaw([res_pri(label==1).Eny],10.^[-1:0.08:6]));
-[MLEres_ori2,MLErecord_ori2] = powerlawExponentMLEstimator([res_pri(label==2).Eny],downSamplingFromPowerLaw([res_pri(label==1).Eny],10.^[-1:0.08:6]));
-[MLEres_our1,MLErecord_our1] = powerlawExponentMLEstimator([res_pri(double(predLabel)==2).Eny],downSamplingFromPowerLaw([res_pri(label==1).Eny],10.^[-1:0.08:6]));
-[MLEres_our2,MLErecord_our2] = powerlawExponentMLEstimator([res_pri(double(predLabel)==1).Eny],downSamplingFromPowerLaw([res_pri(label==1).Eny],10.^[-1:0.08:6]));
-[MLEres_all,MLErecord_all] = powerlawExponentMLEstimator([res_pri.Eny],downSamplingFromPowerLaw([res_pri(label==1).Eny],10.^[-1:0.08:6]));
+[MLEres_ori1,MLErecord_ori1] = powerlawExponentMLEstimator([res_pri(label==1).Eny],[]);
+[MLEres_ori2,MLErecord_ori2] = powerlawExponentMLEstimator([res_pri(label==2).Eny],[]);
+[MLEres_our1,MLErecord_our1] = powerlawExponentMLEstimator([res_pri(double(predLabel)==2).Eny],[]);
+[MLEres_our2,MLErecord_our2] = powerlawExponentMLEstimator([res_pri(double(predLabel)==1).Eny],[]);
+[MLEres_all,MLErecord_all] = powerlawExponentMLEstimator([res_pri.Eny],[]);
 
 label = reshape(label,[],1);
 predLabel = 3 - double(predLabel);

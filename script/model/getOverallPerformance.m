@@ -1,4 +1,6 @@
-function overallPerf = getOverallPerformance(loss,Nc,razorK)
+function [overallPerf,perfL,perfC] = getOverallPerformance(loss,Nc,razorK)
 % calculate overall performance
-overallPerf = 1./(loss) .* (1 - razorK) + razorK.* 1./log10(Nc);
+perfL = 1./(loss);
+perfC = 1./(log10(Nc));
+overallPerf = perfL .* (1 - razorK) + razorK.* perfC;
 end
