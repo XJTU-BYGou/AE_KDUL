@@ -1,11 +1,14 @@
 function res = avgPercentageCalculation(res_pri,label,tInt,varargin)
 label = reshape(double(label),[],1);
 overlapInt = tInt*1/2;
+reptNum = 200;
 
 for i = 1:length(varargin)/2
     switch lower(varargin{i*2-1})
         case 'overlap'
             overlapInt = varargin{i*2};
+        case 'reptnum'
+            reptNum = varargin{i*2};
     end
 end
 
@@ -21,7 +24,6 @@ cenTime = (stTime + edTime) ./2;
 ratio = sum(label.*(T' >= stTime & T' <edTime))./sum(T' >= stTime & T' <edTime) - 1;
 
 
-reptNum = 200;
 ratioRept = nan(reptNum,numel(stTime));
 for i = 1:numel(stTime)
     tmpLabel = label(T' >= stTime(i) & T' <edTime(i));
