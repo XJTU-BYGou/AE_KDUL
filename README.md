@@ -46,11 +46,13 @@ run('main_trainCR316LSS.m');
 ```
 you will get several .mat files in `.\script\export`. Each .mat file stores the data used for corresponding figure.
 
-`main_compMdl.m`  for Fig. 2 Fig. 3  Fig. S2 and Fig. S5.
+`main_compMdl.m`  for Fig. 2, Fig. 3,  Fig. S5, Fig. S8 and Table S1.
 
 `main_application.m` for Fig. 4 and Fig. S6 in testing data.
 
-`main_compMdl_synData.m` for Fig. S4 in synthetic data.
+`main_compMdl_synData.m` for Fig. S4 and Table S11-S14 in synthetic data.
+
+`main_Ablation_synData.m` for Table S2-S10 Ablation studies in synthetic data.
 
 `main_trainCR316LSS.m` for Fig. S7 in new material data.
 
